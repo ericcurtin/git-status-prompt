@@ -15,17 +15,19 @@
 #   source ~/bin/git-status-prompt/git-status-prompt.sh
 #   PS1="\$(GitStatusPrompt)"
 
+readonly LIGHT_GREEN='\e[1;32m'
+readonly GREEN='\e[0;32m'
+readonly NO_COLOR='\e[0m'
 
-readonly PROMPT_HEAD='\033[01;32m'$USER@$HOSTNAME''
-readonly PROMPT_MID='\033[00m\033[00;32m'
-readonly PROMPT_TAIL='\033[00m>'
+readonly PROMPT_HEAD=''$USER@$HOSTNAME''
+readonly PROMPT_MID=''$GREEN''
+readonly PROMPT_TAIL=''$NO_COLOR'>'
 readonly DIRTY_CHAR="*"
 readonly TRACKED_CHAR="!"
 readonly UNTRACKED_CHAR="?"
 readonly STAGED_CHAR="+"
 readonly STASHED_CHAR="$"
 readonly GIT_CLEAN_MSG_REGEX="nothing to commit,? (?working directory clean)?"
-readonly GREEN='\033[0;32m'
 readonly LIME='\033[1;32m'
 readonly YELLOW='\033[1;33m'
 readonly RED='\033[1;31m'
@@ -159,21 +161,7 @@ function GitStatus
     [ $remote_branch ] && upstream_msg=$open_bracket$behind_msg$ahead_msg$close_bracket
     branch_status_msg=$END$branch_msg$status_msg$upstream_msg$END
 
-    # append last commit message trunctuated to console width
-    status_msg=$(echo $branch_status_msg | sed -r $ANSI_FILTER_REGEX --)
-    author_date=$(git log -n 1 --format=format:"%ai" $1 2> /dev/null)
-    commit_log=$( git log -n 1 --format=format:\"%s\" | sed -r "s/\"//g")
-    commit_msg=" ${author_date:0:TIMESTAMP_LEN} $commit_log"
-    current_tty_w=$(($(stty -F /dev/tty size | cut -d ' ' -f2)))
-    prompt_msg_len=$((${#USER} + 1 + ${#HOSTNAME} + 1 + ${#PWD} + 1 + ${#status_msg}))
-    prompt_msg_mod=$(($prompt_msg_len % $current_tty_w))
-    commit_msg_len=$(($current_tty_w - $prompt_msg_mod))
-    min_len=$(($TIMESTAMP_LEN + 1))
-    max_len=$(($current_tty_w - 1))
-    [ $commit_msg_len -lt $min_len -o $commit_msg_len -gt $max_len ] && commit_msg_len=0
-    commit_msg=${commit_msg:0:commit_msg_len}
-
-    echo "$branch_status_msg$commit_msg"
+    echo "$branch_status_msg"
 
   done < <(git for-each-ref --format="%(refname:short) %(upstream:short)" refs/heads)
 }
@@ -183,5 +171,5 @@ function GitStatus
 
 function GitStatusPrompt
 {
-  echo -e "$PROMPT_HEAD $(date +%T) $PROMPT_MID$(GitStatus)\n$BLUE$PWD$END$PROMPT_TAIL"
+  echo -e "$LIGHT_GREEN$PROMPT_HEAD $(date +%T) $PROMPT_MID$(GitStatus)\n$BLUE$PWD$NO_COLOR$PROMPT_TAIL"
 }
