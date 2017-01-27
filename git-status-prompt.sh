@@ -16,9 +16,9 @@
 #   PS1="\$(GitStatusPrompt)"
 
 
-readonly PROMPT_HEAD='\033[01;32m'$USER@$HOSTNAME'\033[00m:\033[01;36m'
+readonly PROMPT_HEAD='\033[01;32m'$USER@$HOSTNAME''
 readonly PROMPT_MID='\033[00m\033[00;32m'
-readonly PROMPT_TAIL='\033[00m\n$ '
+readonly PROMPT_TAIL='\033[00m>'
 readonly DIRTY_CHAR="*"
 readonly TRACKED_CHAR="!"
 readonly UNTRACKED_CHAR="?"
@@ -29,6 +29,7 @@ readonly GREEN='\033[0;32m'
 readonly LIME='\033[1;32m'
 readonly YELLOW='\033[1;33m'
 readonly RED='\033[1;31m'
+readonly BLUE='\033[01;36m'
 readonly END='\033[0m'
 readonly CLEAN_COLOR=$GREEN
 readonly DIRTY_COLOR=$YELLOW
@@ -97,11 +98,11 @@ function GitStatus
   current_branch=`git rev-parse --abbrev-ref HEAD` ; [ $current_branch ] || return ;
 
   # detect detached HEAD state and abort
-  if   [ -f $(pwd)/.git/MERGE_HEAD    ] && [ ! -z "`cat .git/MERGE_MSG | grep -E '^Merge'`" ]
+  if   [ -f $PWD/.git/MERGE_HEAD ] && [ ! -z "`cat .git/MERGE_MSG | grep -E '^Merge'`" ]
   then merge_msg=`cat .git/MERGE_MSG | grep -E "^Merge (.*)(branch|tag|commit) '"               | \
                   sed -e "s/^Merge \(.*\)\(branch\|tag\|commit\) '\(.*\)'\( into .*\)\?$/ \3\4/"`
        echo "$UNTRACKED_COLOR(merging$merge_msg)$END"  ; return ;
-  elif [ -d $(pwd)/.git/rebase-apply/ ] || [ -d $(pwd)/.git/rebase-merge/ ]
+  elif [ -d $PWD/.git/rebase-apply/ ] || [ -d $PWD/.git/rebase-merge/ ]
   then rebase_dir=`ls -d .git/rebase-* | sed -e "s/^.git\/rebase-\(.*\)$/.git\/rebase-\1/"`
        this_branch=`cat $rebase_dir/head-name | sed -e "s/^refs\/heads\/\(.*\)$/\1/"`
        their_commit=`cat $rebase_dir/onto`
@@ -143,7 +144,6 @@ function GitStatus
     stashed=$(HasStashedChanges)
 
     # build output
-    current_dir="$(pwd)"
     open_paren="$branch_color($END"
     close_paren="$branch_color)$END"
     open_bracket="$branch_color[$END"
@@ -157,7 +157,7 @@ function GitStatus
     [ $remote_branch ] && behind_msg="$behind_color$n_behind<-$END"
     [ $remote_branch ] && ahead_msg="$ahead_color->$n_ahead$END"
     [ $remote_branch ] && upstream_msg=$open_bracket$behind_msg$ahead_msg$close_bracket
-    branch_status_msg=$open_paren$branch_msg$status_msg$upstream_msg$close_paren
+    branch_status_msg=$END$branch_msg$status_msg$upstream_msg$END
 
     # append last commit message trunctuated to console width
     status_msg=$(echo $branch_status_msg | sed -r $ANSI_FILTER_REGEX --)
@@ -165,7 +165,7 @@ function GitStatus
     commit_log=$( git log -n 1 --format=format:\"%s\" | sed -r "s/\"//g")
     commit_msg=" ${author_date:0:TIMESTAMP_LEN} $commit_log"
     current_tty_w=$(($(stty -F /dev/tty size | cut -d ' ' -f2)))
-    prompt_msg_len=$((${#USER} + 1 + ${#HOSTNAME} + 1 + ${#current_dir} + 1 + ${#status_msg}))
+    prompt_msg_len=$((${#USER} + 1 + ${#HOSTNAME} + 1 + ${#PWD} + 1 + ${#status_msg}))
     prompt_msg_mod=$(($prompt_msg_len % $current_tty_w))
     commit_msg_len=$(($current_tty_w - $prompt_msg_mod))
     min_len=$(($TIMESTAMP_LEN + 1))
@@ -183,5 +183,5 @@ function GitStatus
 
 function GitStatusPrompt
 {
-  echo -e "$PROMPT_HEAD$(pwd)/$PROMPT_MID$(GitStatus)$PROMPT_TAIL"
+  echo -e "$PROMPT_HEAD $(date +%T) $PROMPT_MID$(GitStatus)\n$BLUE$PWD$END$PROMPT_TAIL"
 }
