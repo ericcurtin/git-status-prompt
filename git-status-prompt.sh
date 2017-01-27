@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 # git-status-prompt.sh
 # Copyright 2013-2016 bill-auger <http://github.com/bill-auger/git-status-prompt/issues>
@@ -15,22 +15,18 @@
 #   source ~/bin/git-status-prompt/git-status-prompt.sh
 #   PS1="\$(GitStatusPrompt)"
 
-readonly LIGHT_GREEN='\e[1;32m'
 readonly GREEN='\e[0;32m'
-readonly NO_COLOR='\e[0m'
+readonly NO_COLOR='\e[m'
 
-readonly PROMPT_HEAD=''$USER@$HOSTNAME''
-readonly PROMPT_TAIL=''$NO_COLOR'>'
 readonly DIRTY_CHAR="*"
 readonly TRACKED_CHAR="!"
 readonly UNTRACKED_CHAR="?"
 readonly STAGED_CHAR="+"
 readonly STASHED_CHAR="$"
 readonly GIT_CLEAN_MSG_REGEX="nothing to commit,? (?working directory clean)?"
-readonly LIME='\033[1;32m'
-readonly YELLOW='\033[1;33m'
-readonly RED='\033[1;31m'
-readonly BLUE='\033[01;36m'
+readonly LIME='\e[1;32m'
+readonly YELLOW='\e[1;33m'
+readonly RED='\e[1;31m'
 readonly CLEAN_COLOR=$GREEN
 readonly DIRTY_COLOR=$YELLOW
 readonly TRACKED_COLOR=$YELLOW
@@ -169,5 +165,5 @@ function GitStatus
 
 function GitStatusPrompt
 {
-  echo -e "$LIGHT_GREEN$PROMPT_HEAD $(date +%T) $GREEN$(GitStatus)\n"
+  echo -e "$GREEN$(GitStatus)"
 }
