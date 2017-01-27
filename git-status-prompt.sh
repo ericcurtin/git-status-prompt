@@ -20,7 +20,6 @@ readonly GREEN='\e[0;32m'
 readonly NO_COLOR='\e[0m'
 
 readonly PROMPT_HEAD=''$USER@$HOSTNAME''
-readonly PROMPT_MID=''$GREEN''
 readonly PROMPT_TAIL=''$NO_COLOR'>'
 readonly DIRTY_CHAR="*"
 readonly TRACKED_CHAR="!"
@@ -32,7 +31,6 @@ readonly LIME='\033[1;32m'
 readonly YELLOW='\033[1;33m'
 readonly RED='\033[1;31m'
 readonly BLUE='\033[01;36m'
-readonly END='\033[0m'
 readonly CLEAN_COLOR=$GREEN
 readonly DIRTY_COLOR=$YELLOW
 readonly TRACKED_COLOR=$YELLOW
@@ -61,7 +59,7 @@ function AssertHasCommits
 
 function HasAnyChanges
 {
-  [ "`git status 2> /dev/null | tail -n1 | grep -E \"$GIT_CLEAN_MSG_REGEX\"`" ] || echo "$DIRTY_CHAR"
+  [ "`git status 2> /dev/null | tail -n1 | /bin/grep \"$GIT_CLEAN_MSG_REGEX\"`" ] || echo "$DIRTY_CHAR"
 }
 
 function HasTrackedChanges
@@ -100,17 +98,17 @@ function GitStatus
   current_branch=`git rev-parse --abbrev-ref HEAD` ; [ $current_branch ] || return ;
 
   # detect detached HEAD state and abort
-  if   [ -f $PWD/.git/MERGE_HEAD ] && [ ! -z "`cat .git/MERGE_MSG | grep -E '^Merge'`" ]
-  then merge_msg=`cat .git/MERGE_MSG | grep -E "^Merge (.*)(branch|tag|commit) '"               | \
+  if   [ -f $PWD/.git/MERGE_HEAD ] && [ ! -z "`cat .git/MERGE_MSG | /bin/grep '^Merge'`" ]
+  then merge_msg=`cat .git/MERGE_MSG | /bin/grep "^Merge (.*)(branch|tag|commit) '"               | \
                   sed -e "s/^Merge \(.*\)\(branch\|tag\|commit\) '\(.*\)'\( into .*\)\?$/ \3\4/"`
-       echo "$UNTRACKED_COLOR(merging$merge_msg)$END"  ; return ;
+       echo "$UNTRACKED_COLOR(merging$merge_msg)$NO_COLOR"  ; return ;
   elif [ -d $PWD/.git/rebase-apply/ ] || [ -d $PWD/.git/rebase-merge/ ]
   then rebase_dir=`ls -d .git/rebase-* | sed -e "s/^.git\/rebase-\(.*\)$/.git\/rebase-\1/"`
        this_branch=`cat $rebase_dir/head-name | sed -e "s/^refs\/heads\/\(.*\)$/\1/"`
        their_commit=`cat $rebase_dir/onto`
-       echo "$UNTRACKED_COLOR(rebasing $this_branch onto $their_commit)$END" ; return ;
+       echo "$UNTRACKED_COLOR(rebasing $this_branch onto $their_commit)$NO_COLOR" ; return ;
   elif [ "$current_branch" == "HEAD" ]
-  then echo "$UNTRACKED_COLOR(detached)$END" ; return ;
+  then echo "$UNTRACKED_COLOR(detached)$NO_COLOR" ; return ;
   fi
 
   # loop over all branches to find remote tracking branch
@@ -125,8 +123,8 @@ function GitStatus
     # get sync status
     if [ $remote_branch ] ; then
       status=$(SyncStatus $local_branch $remote_branch)
-      n_behind=`echo "$status" | tr " " "\n" | grep -c '^>'`
-      n_ahead=` echo "$status" | tr " " "\n" | grep -c '^<'`
+      n_behind=`echo "$status" | tr " " "\n" | /bin/grep -c '^>'`
+      n_ahead=` echo "$status" | tr " " "\n" | /bin/grep -c '^<'`
 
       # set sync color
       if [ "$n_behind" -ne 0 ] ; then behind_color=$BEHIND_COLOR ; else behind_color=$EVEN_COLOR ; fi ;
@@ -146,20 +144,20 @@ function GitStatus
     stashed=$(HasStashedChanges)
 
     # build output
-    open_paren="$branch_color($END"
-    close_paren="$branch_color)$END"
-    open_bracket="$branch_color[$END"
-    close_bracket="$branch_color]$END"
-    tracked_msg=$TRACKED_COLOR$tracked$END
-    untracked_msg=$UNTRACKED_COLOR$untracked$END
-    staged_msg=$STAGED_COLOR$staged$END
-    stashed_msg=$STASHED_COLOR$stashed$END
-    branch_msg=$branch_color$current_branch$END
+    open_paren="$branch_color($NO_COLOR"
+    close_paren="$branch_color)$NO_COLOR"
+    open_bracket="$branch_color$NO_COLOR"
+    close_bracket="$branch_color$NO_COLOR"
+    tracked_msg=$TRACKED_COLOR$tracked$NO_COLOR
+    untracked_msg=$UNTRACKED_COLOR$untracked$NO_COLOR
+    staged_msg=$STAGED_COLOR$staged$NO_COLOR
+    stashed_msg=$STASHED_COLOR$stashed$NO_COLOR
+    branch_msg=$branch_color$current_branch$NO_COLOR
     status_msg=$stashed_msg$untracked_msg$tracked_msg$staged_msg
-    [ $remote_branch ] && behind_msg="$behind_color$n_behind<-$END"
-    [ $remote_branch ] && ahead_msg="$ahead_color->$n_ahead$END"
+    [ $remote_branch ] && behind_msg="$behind_color$n_behind<$NO_COLOR"
+    [ $remote_branch ] && ahead_msg="$ahead_color>$n_ahead$NO_COLOR"
     [ $remote_branch ] && upstream_msg=$open_bracket$behind_msg$ahead_msg$close_bracket
-    branch_status_msg=$END$branch_msg$status_msg$upstream_msg$END
+    branch_status_msg=$NO_COLOR$branch_msg$status_msg$upstream_msg$NO_COLOR
 
     echo "$branch_status_msg"
 
@@ -171,5 +169,5 @@ function GitStatus
 
 function GitStatusPrompt
 {
-  echo -e "$LIGHT_GREEN$PROMPT_HEAD $(date +%T) $PROMPT_MID$(GitStatus)\n$BLUE$PWD$NO_COLOR$PROMPT_TAIL"
+  echo -e "$LIGHT_GREEN$PROMPT_HEAD $(date +%T) $GREEN$(GitStatus)\n"
 }
