@@ -1,23 +1,7 @@
 #!/bin/bash
 
-# git-status-prompt.sh
-# Copyright 2013-2016 bill-auger <http://github.com/bill-auger/git-status-prompt/issues>
-
-# this script formats git branch name plus dirty and sync status for appending to bash prompt
-# format is: (branch-name status-indicators [divergence]) last-commit-message
-#   '*' character indicates that the working tree differs from HEAD
-#   '!' character indicates that some tracked files have changed
-#   '?' character indicates that some new or untracked files exist
-#   '+' character indicates that some changes are staged for commit
-#   '$' character indicates that a stash exists
-#   [n<-->n] indicates the number of commits behind and ahead of upstream
-# usage:
-#   source ~/bin/git-status-prompt/git-status-prompt.sh
-#   PS1="\$(GitStatusPrompt)"
-
 readonly GREEN='\e[0;32m'
 readonly NO_COLOR='\e[m'
-
 readonly DIRTY_CHAR="*"
 readonly TRACKED_CHAR="!"
 readonly UNTRACKED_CHAR="?"
@@ -39,54 +23,42 @@ readonly EVEN_COLOR=$GREEN
 readonly ANSI_FILTER_REGEX="s/\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?m//g"
 readonly TIMESTAMP_LEN=10
 
-
-# helpers
-
-function AssertIsValidRepo
-{
+AssertIsValidRepo() {
   git rev-parse --is-inside-work-tree > /dev/null 2>&1 && echo "OK"
 }
 
-function AssertHasCommits
-{
+AssertHasCommits() {
   # TODO: does this fail if detached HEAD ?
   git cat-file -t HEAD > /dev/null 2>&1 && echo "OK"
 }
 
-function HasAnyChanges
-{
+HasAnyChanges() {
   [ "`git status 2> /dev/null | tail -n1 | /bin/grep \"$GIT_CLEAN_MSG_REGEX\"`" ] || echo "$DIRTY_CHAR"
 }
 
-function HasTrackedChanges
-{
+HasTrackedChanges() {
   git diff --no-ext-diff --quiet --exit-code || echo "$TRACKED_CHAR"
 }
 
-function HasUntrackedChanges
-{
+HasUntrackedChanges() {
   [ -n "$(git ls-files --others --exclude-standard)" ] && echo "$UNTRACKED_CHAR"
 }
 
-function HasStagedChanges
-{
+HasStagedChanges() {
   git diff-index --cached --quiet HEAD -- || echo "$STAGED_CHAR"
 }
 
-function HasStashedChanges
-{
+HasStashedChanges() {
   git rev-parse --verify refs/stash > /dev/null 2>&1 && echo "$STASHED_CHAR"
 }
 
-function SyncStatus
-{
+SyncStatus() {
   local_branch=$1 ; remote_branch=$2 ;
   status=`git rev-list --left-right ${local_branch}...${remote_branch} -- 2>/dev/null`
   [ $(($?)) -eq 0 ] && echo $status
 }
 
-function GitStatus
-{
+GitStatus() {
   # ensure we are in a valid git repository with commits
   [ ! $(AssertIsValidRepo) ]                        && return
   [ ! $(AssertHasCommits)  ] && echo "(no commits)" && return
@@ -160,10 +132,6 @@ function GitStatus
   done < <(git for-each-ref --format="%(refname:short) %(upstream:short)" refs/heads)
 }
 
-
-# main entry point
-
-function GitStatusPrompt
-{
+GitStatusPrompt() {
   echo -e "$GREEN$(GitStatus)"
 }
