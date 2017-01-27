@@ -95,7 +95,7 @@ GitStatus() {
     # filter branches by name
     if [ "$current_branch" != "$local_branch" ]; then
       continue
-   fi
+    fi
 
     # set branch color based on dirty status
     if [ -z "$(HasAnyChanges)" ]; then
