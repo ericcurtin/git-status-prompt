@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # git-status-prompt.sh
 # Copyright 2013-2016 bill-auger <http://github.com/bill-auger/git-status-prompt/issues>
